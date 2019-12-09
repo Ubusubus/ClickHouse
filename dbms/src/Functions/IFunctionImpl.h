@@ -357,7 +357,7 @@ public:
 
     void execute(Block & block, const ColumnNumbers & arguments, size_t result, size_t input_rows_count, bool dry_run) final;
 
-    void createLowCardinalityResultCache(size_t cache_size);
+    void createLowCardinalityResultCache(size_t cache_size) override;
 
 private:
     ExecutableFunctionImplPtr impl;
