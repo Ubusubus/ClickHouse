@@ -1833,15 +1833,12 @@ private:
         else if (isNativeNumber(from_type) || isEnum(from_type))
         {
             auto function = Function::create(context);
+            auto func_or_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(function))
+                    .build(ColumnsWithTypeAndName{{nullptr, from_type, "" }});
 
-            /// Check conversion using underlying function
+            return [func_or_adaptor] (Block & block, const ColumnNumbers & arguments, const size_t result, size_t input_rows_count)
             {
-                function->getReturnType(ColumnsWithTypeAndName(1, { nullptr, from_type, "" }));
-            }
-
-            return [function] (Block & block, const ColumnNumbers & arguments, const size_t result, size_t input_rows_count)
-            {
-                function->execute(block, arguments, result, input_rows_count);
+                func_or_adaptor->execute(block, arguments, result, input_rows_count);
             };
         }
         else
