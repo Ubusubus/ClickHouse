@@ -960,8 +960,11 @@ private:
     void executeTupleEqualityImpl(Block & block, size_t result, const ColumnsWithTypeAndName & x, const ColumnsWithTypeAndName & y,
                                       size_t tuple_size, size_t input_rows_count)
     {
-        ComparisonFunction func_compare(context);
-        ConvolutionFunction func_convolution;
+        auto func_compare = ComparisonFunction::create(context);
+        auto func_convolution = ConvolutionFunction::create(context);
+
+        auto func_compare_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(func_compare));
+        auto func_convolution_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(func_convolution));
 
         Block tmp_block;
         for (size_t i = 0; i < tuple_size; ++i)
@@ -969,9 +972,11 @@ private:
             tmp_block.insert(x[i]);
             tmp_block.insert(y[i]);
 
+            auto impl = func_compare_adaptor.build({x[i], y[i]});
+
             /// Comparison of the elements.
             tmp_block.insert({ nullptr, std::make_shared<DataTypeUInt8>(), "" });
-            func_compare.execute(tmp_block, {i * 3, i * 3 + 1}, i * 3 + 2, input_rows_count);
+            impl->execute(tmp_block, {i * 3, i * 3 + 1}, i * 3 + 2, input_rows_count);
         }
 
         /// Logical convolution.
@@ -981,7 +986,10 @@ private:
         for (size_t i = 0; i < tuple_size; ++i)
             convolution_args[i] = i * 3 + 2;
 
-        func_convolution.execute(tmp_block, convolution_args, tuple_size * 3, input_rows_count);
+        ColumnsWithTypeAndName convolution_types(convolution_args.size(), { nullptr, std::make_shared<DataTypeUInt8>(), "" });
+        auto impl = func_convolution_adaptor.build(convolution_types);
+
+        impl->execute(tmp_block, convolution_args, tuple_size * 3, input_rows_count);
         block.getByPosition(result).column = tmp_block.getByPosition(tuple_size * 3).column;
     }
 
