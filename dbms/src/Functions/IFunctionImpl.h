@@ -284,10 +284,11 @@ public:
       */
     virtual bool hasInformationAboutMonotonicity() const { return false; }
 
+    using Monotonicity = IFunctionBase::Monotonicity;
     /** Get information about monotonicity on a range of values. Call only if hasInformationAboutMonotonicity.
       * NULL can be passed as one of the arguments. This means that the corresponding range is unlimited on the left or on the right.
       */
-    virtual IFunctionBase::Monotonicity getMonotonicityForRange(const IDataType & /*type*/, const Field & /*left*/, const Field & /*right*/) const
+    virtual Monotonicity getMonotonicityForRange(const IDataType & /*type*/, const Field & /*left*/, const Field & /*right*/) const
     {
         throw Exception("Function " + getName() + " has no information about its monotonicity.", ErrorCodes::NOT_IMPLEMENTED);
     }
