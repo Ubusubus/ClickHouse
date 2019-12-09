@@ -2180,13 +2180,13 @@ private:
     }
 };
 
-class FunctionBuilderCast : public FunctionBuilderImpl
+class FunctionBuilderCast : public IFunctionOverloadResolverImpl
 {
 public:
     using MonotonicityForRange = FunctionCast::MonotonicityForRange;
 
     static constexpr auto name = "CAST";
-    static FunctionOverloadResolverPtr create(const Context & context) { return std::make_shared<FunctionBuilderCast>(context); }
+    static FunctionOverloadResolverImplPtr create(const Context & context) { return std::make_unique<FunctionBuilderCast>(context); }
 
     FunctionBuilderCast(const Context & context_) : context(context_) {}
 
@@ -2198,7 +2198,7 @@ public:
 
 protected:
 
-    FunctionBasePtr buildImpl(const ColumnsWithTypeAndName & arguments, const DataTypePtr & return_type) const override
+    FunctionBaseImplPtr build(const ColumnsWithTypeAndName & arguments, const DataTypePtr & return_type) const override
     {
         DataTypes data_types(arguments.size());
 
@@ -2206,10 +2206,10 @@ protected:
             data_types[i] = arguments[i].type;
 
         auto monotonicity = getMonotonicityInformation(arguments.front().type, return_type.get());
-        return std::make_shared<FunctionCast>(context, name, std::move(monotonicity), data_types, return_type);
+        return std::make_unique<FunctionCast>(context, name, std::move(monotonicity), data_types, return_type);
     }
 
-    DataTypePtr getReturnTypeImpl(const ColumnsWithTypeAndName & arguments) const override
+    DataTypePtr getReturnType(const ColumnsWithTypeAndName & arguments) const override
     {
         const auto type_col = checkAndGetColumnConst<ColumnString>(arguments.back().column.get());
         if (!type_col)
