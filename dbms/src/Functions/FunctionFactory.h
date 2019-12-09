@@ -47,6 +47,12 @@ public:
     /// Returns nullptr if not found.
     FunctionOverloadResolverPtr tryGet(const std::string & name, const Context & context) const;
 
+    /// Throws an exception if not found.
+    FunctionOverloadResolverImplPtr getImpl(const std::string & name, const Context & context) const;
+
+    /// Returns nullptr if not found.
+    FunctionOverloadResolverImplPtr tryGetImpl(const std::string & name, const Context & context) const;
+
 private:
     using Functions = std::unordered_map<std::string, Creator>;
 
