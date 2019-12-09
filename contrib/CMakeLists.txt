@@ -52,6 +52,7 @@ if (USE_INTERNAL_BTRIE_LIBRARY)
 endif ()
 
 if (USE_INTERNAL_ZLIB_LIBRARY)
+    unset (BUILD_SHARED_LIBS CACHE)
     set (ZLIB_ENABLE_TESTS 0 CACHE INTERNAL "")
     set (SKIP_INSTALL_ALL 1 CACHE INTERNAL "")
     set (ZLIB_COMPAT 1 CACHE INTERNAL "") # also enables WITH_GZFILEOP
@@ -68,10 +69,10 @@ if (USE_INTERNAL_ZLIB_LIBRARY)
     # TODO: make pull to Dead2/zlib-ng and remove:
     # We should use same defines when including zlib.h as used when zlib compiled
     target_compile_definitions (zlib PUBLIC ZLIB_COMPAT WITH_GZFILEOP)
-    #target_compile_definitions (zlibstatic PUBLIC ZLIB_COMPAT WITH_GZFILEOP)
+    target_compile_definitions (zlibstatic PUBLIC ZLIB_COMPAT WITH_GZFILEOP)
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
        target_compile_definitions (zlib PUBLIC X86_64 UNALIGNED_OK)
-       #target_compile_definitions (zlibstatic PUBLIC X86_64 UNALIGNED_OK)
+       target_compile_definitions (zlibstatic PUBLIC X86_64 UNALIGNED_OK)
     endif ()
 
     #set_target_properties(example PROPERTIES EXCLUDE_FROM_ALL 1)
