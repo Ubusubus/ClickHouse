@@ -1013,7 +1013,7 @@ std::optional<Range> KeyCondition::applyMonotonicFunctionsChainToRange(
     for (auto & func : functions)
     {
         /// We check the monotonicity of each function on a specific range.
-        IFunction::Monotonicity monotonicity = func->getMonotonicityForRange(
+        IFunctionBase::Monotonicity monotonicity = func->getMonotonicityForRange(
             *current_type.get(), key_range.left, key_range.right);
 
         if (!monotonicity.is_monotonic)
