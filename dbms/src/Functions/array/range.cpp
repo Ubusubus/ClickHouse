@@ -7,6 +7,7 @@
 #include <Columns/ColumnArray.h>
 #include <Columns/ColumnVector.h>
 #include <Interpreters/castColumn.h>
+#include <Interpreters/convertFieldToType.h>
 #include <numeric>
 
 
@@ -357,7 +358,8 @@ private:
         // for step column, defaults to 1
         if (arguments.size() == 2)
         {
-            columns_holder[2] = return_type->createColumnConst(input_rows_count, 1);
+            columns_holder[2] = return_type->createColumnConst(input_rows_count,
+                convertFieldToType(1, *return_type));
             columns[2] = columns_holder[2].get();
         }
 
