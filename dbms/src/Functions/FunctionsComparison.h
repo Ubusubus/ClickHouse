@@ -997,12 +997,14 @@ private:
     void executeTupleLessGreaterImpl(Block & block, size_t result, const ColumnsWithTypeAndName & x,
                                          const ColumnsWithTypeAndName & y, size_t tuple_size, size_t input_rows_count)
     {
-        HeadComparisonFunction func_compare_head(context);
-        TailComparisonFunction func_compare_tail(context);
+        auto func_compare_head = HeadComparisonFunction::create(context);
+        auto func_compare_tail = TailComparisonFunction::create(context);
         auto func_and = FunctionAnd::create(context);
         auto func_or = FunctionOr::create(context);
         auto func_equals = FunctionComparison<EqualsOp, NameEquals>::create(context);
 
+        auto func_compare_head_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(func_compare_head));
+        auto func_compare_tail_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(func_compare_tail));
         auto func_equals_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(func_equals));
 
         ColumnsWithTypeAndName bin_args = {{ nullptr, std::make_shared<DataTypeUInt8>(), "" },
@@ -1023,18 +1025,23 @@ private:
             tmp_block.insert(y[i]);
 
             tmp_block.insert({ nullptr, std::make_shared<DataTypeUInt8>(), "" });
-            auto impl = func_equals_adaptor.build({x[i], y[i]});
 
             if (i + 1 != tuple_size)
             {
-                func_compare_head.execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 2, input_rows_count);
+                auto impl_head = func_compare_head_adaptor.build({x[i], y[i]});
+                impl_head->execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 2, input_rows_count);
 
                 tmp_block.insert({ nullptr, std::make_shared<DataTypeUInt8>(), "" });
-                impl->execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 3, input_rows_count);
+
+                auto impl_equals = func_equals_adaptor.build({x[i], y[i]});
+                impl_equals->execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 3, input_rows_count);
 
             }
             else
+            {
+                auto impl_tail = func_compare_tail_adaptor.build({x[i], y[i]});
                 func_compare_tail.execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 2, input_rows_count);
+            }
         }
 
         /// Combination. Complex code - make a drawing. It can be replaced by a recursive comparison of tuples.
