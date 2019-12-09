@@ -549,7 +549,7 @@ struct NameGreaterOrEquals { static constexpr auto name = "greaterOrEquals"; };
 template <
     template <typename, typename> class Op,
     typename Name>
-class FunctionComparison : public IFunction, public std::enable_shared_from_this<FunctionComparison<Op, Name>>
+class FunctionComparison : public IFunction
 {
 public:
     static constexpr auto name = Name::name;
@@ -1139,7 +1139,8 @@ public:
 
         if (left_tuple && right_tuple)
         {
-            auto adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(shared_from_this()));
+            auto adaptor = FunctionOverloadResolverAdaptor(
+                    std::make_unique<DefaultFunctionBuilder>(FunctionComparison<Op, Name>::create(context)));
 
             size_t size = left_tuple->getElements().size();
             for (size_t i = 0; i < size; ++i)
