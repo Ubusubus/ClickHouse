@@ -530,7 +530,8 @@ public:
 
     bool hasInformationAboutMonotonicity() const override { return function->hasInformationAboutMonotonicity(); }
 
-    IFunctionBase::Monotonicity getMonotonicityForRange(const IDataType & type, const Field & left, const Field & right) const override
+    using Monotonicity = IFunctionBase::Monotonicity;
+    Monotonicity getMonotonicityForRange(const IDataType & type, const Field & left, const Field & right) const override
     {
         return function->getMonotonicityForRange(type, left, right);
     }

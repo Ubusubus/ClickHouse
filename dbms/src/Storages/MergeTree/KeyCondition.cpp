@@ -491,7 +491,7 @@ bool KeyCondition::canConstantBeWrappedByMonotonicFunctions(
                 return false;
 
             // Range is irrelevant in this case
-            IFunctionBase::Monotonicity monotonicity = a.function_base->getMonotonicityForRange(*out_type, Field(), Field());
+            IFunction::Monotonicity monotonicity = a.function_base->getMonotonicityForRange(*out_type, Field(), Field());
             if (!monotonicity.is_always_monotonic)
                 return false;
 
@@ -1013,7 +1013,7 @@ std::optional<Range> KeyCondition::applyMonotonicFunctionsChainToRange(
     for (auto & func : functions)
     {
         /// We check the monotonicity of each function on a specific range.
-        IFunctionBase::Monotonicity monotonicity = func->getMonotonicityForRange(
+        IFunction::Monotonicity monotonicity = func->getMonotonicityForRange(
             *current_type.get(), key_range.left, key_range.right);
 
         if (!monotonicity.is_monotonic)
