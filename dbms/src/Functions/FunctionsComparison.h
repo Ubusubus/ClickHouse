@@ -1040,7 +1040,7 @@ private:
             else
             {
                 auto impl_tail = func_compare_tail_adaptor.build({x[i], y[i]});
-                func_compare_tail.execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 2, input_rows_count);
+                impl_tail->execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 2, input_rows_count);
             }
         }
 
