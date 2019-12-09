@@ -549,7 +549,7 @@ struct NameGreaterOrEquals { static constexpr auto name = "greaterOrEquals"; };
 template <
     template <typename, typename> class Op,
     typename Name>
-class FunctionComparison : public IFunction
+class FunctionComparison : public IFunction, public std::enable_shared_from_this<FunctionComparison<Op, Name>>
 {
 public:
     static constexpr auto name = Name::name;
@@ -991,9 +991,20 @@ private:
     {
         HeadComparisonFunction func_compare_head(context);
         TailComparisonFunction func_compare_tail(context);
-        FunctionAnd func_and;
-        FunctionOr func_or;
-        FunctionComparison<EqualsOp, NameEquals> func_equals(context);
+        auto func_and = FunctionAnd::create(context);
+        auto func_or = FunctionOr::create(context);
+        auto func_equals = FunctionComparison<EqualsOp, NameEquals>::create(context);
+
+        auto func_equals_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(func_equals));
+
+        ColumnsWithTypeAndName bin_args = {{ nullptr, std::make_shared<DataTypeUInt8>(), "" },
+                                           { nullptr, std::make_shared<DataTypeUInt8>(), "" }};
+
+        auto func_and_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(func_and))
+                .build(bin_args);
+
+        auto func_or_adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(func_or))
+                .build(bin_args);
 
         Block tmp_block;
 
@@ -1004,13 +1015,14 @@ private:
             tmp_block.insert(y[i]);
 
             tmp_block.insert({ nullptr, std::make_shared<DataTypeUInt8>(), "" });
+            auto impl = func_equals_adaptor.build({x[i], y[i]});
 
             if (i + 1 != tuple_size)
             {
                 func_compare_head.execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 2, input_rows_count);
 
                 tmp_block.insert({ nullptr, std::make_shared<DataTypeUInt8>(), "" });
-                func_equals.executeImpl(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 3, input_rows_count);
+                impl->execute(tmp_block, {i * 4, i * 4 + 1}, i * 4 + 3, input_rows_count);
 
             }
             else
@@ -1022,9 +1034,9 @@ private:
         while (i > 0)
         {
             tmp_block.insert({ nullptr, std::make_shared<DataTypeUInt8>(), "" });
-            func_and.executeImpl(tmp_block, {tmp_block.columns() - 2, (i - 1) * 4 + 3}, tmp_block.columns() - 1, input_rows_count);
+            func_and_adaptor->execute(tmp_block, {tmp_block.columns() - 2, (i - 1) * 4 + 3}, tmp_block.columns() - 1, input_rows_count);
             tmp_block.insert({ nullptr, std::make_shared<DataTypeUInt8>(), "" });
-            func_or.executeImpl(tmp_block, {tmp_block.columns() - 2, (i - 1) * 4 + 2}, tmp_block.columns() - 1, input_rows_count);
+            func_or_adaptor->execute(tmp_block, {tmp_block.columns() - 2, (i - 1) * 4 + 2}, tmp_block.columns() - 1, input_rows_count);
             --i;
         }
 
@@ -1119,12 +1131,14 @@ public:
 
         if (left_tuple && right_tuple)
         {
+            auto adaptor = FunctionOverloadResolverAdaptor(std::make_unique<DefaultFunctionBuilder>(shared_from_this()));
+
             size_t size = left_tuple->getElements().size();
             for (size_t i = 0; i < size; ++i)
             {
                 ColumnsWithTypeAndName args = {{nullptr, left_tuple->getElements()[i], ""},
                                                {nullptr, right_tuple->getElements()[i], ""}};
-                getReturnTypeImpl(args);
+                adaptor.build(args);
             }
         }
 
