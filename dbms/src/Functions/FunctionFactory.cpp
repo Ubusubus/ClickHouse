@@ -64,11 +64,11 @@ FunctionOverloadResolverPtr FunctionFactory::tryGet(
 
     auto it = functions.find(name);
     if (functions.end() != it)
-        return it->second(context);
+        return std::make_shared<FunctionOverloadResolverAdaptor>(it->second(context));
 
     it = case_insensitive_functions.find(Poco::toLower(name));
     if (case_insensitive_functions.end() != it)
-        return it->second(context);
+        return std::make_shared<FunctionOverloadResolverAdaptor>(it->second(context));
 
     return {};
 }
