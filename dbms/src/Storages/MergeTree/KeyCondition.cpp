@@ -491,7 +491,7 @@ bool KeyCondition::canConstantBeWrappedByMonotonicFunctions(
                 return false;
 
             // Range is irrelevant in this case
-            IFunction::Monotonicity monotonicity = a.function_base->getMonotonicityForRange(*out_type, Field(), Field());
+            IFunctionBase::Monotonicity monotonicity = a.function_base->getMonotonicityForRange(*out_type, Field(), Field());
             if (!monotonicity.is_always_monotonic)
                 return false;
 
