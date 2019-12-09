@@ -427,7 +427,7 @@ private:
 class FunctionOverloadResolverAdaptor : public IFunctionOverloadResolver
 {
 public:
-    FunctionOverloadResolverAdaptor(FunctionOverloadResolverImplPtr impl_) : impl(std::move(impl_)) {}
+    explicit FunctionOverloadResolverAdaptor(FunctionOverloadResolverImplPtr impl_) : impl(std::move(impl_)) {}
 
     String getName() const final { return impl->getName(); }
 
